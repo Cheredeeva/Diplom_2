@@ -1,54 +1,57 @@
-import helpers.CreateUserRequestBody;
-import helpers.UserServiceHelper;
+import api.Constants;
+import api.user.UserRequestBody;
+import api.user.StateUserService;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import static org.hamcrest.Matchers.equalTo;
 
-
 public class ChangeEmailToExistingTest {
-    private final UserServiceHelper updatedUserServiceHelper = new UserServiceHelper();
-    private final UserServiceHelper existingUserServiceHelper = new UserServiceHelper();
-    private CreateUserRequestBody existingUserRequestBody;
+    private final StateUserService updatedStateUserService = new StateUserService();
+    private final StateUserService existingStateUserService = new StateUserService();
+    private UserRequestBody existingUserRequestBody;
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/";
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        RestAssured.baseURI = Constants.BASE_URI;
+        UserRequestBody requestBody = new UserRequestBody(
                 "chereder@yan.ru",
                 "password",
                 "User"
         );
-        updatedUserServiceHelper.createUser(requestBody);
+        updatedStateUserService.createUser(requestBody);
 
-        existingUserRequestBody = new CreateUserRequestBody(
+        existingUserRequestBody = new UserRequestBody(
                 "chere@yan.ru",
                 "password",
                 "User"
         );
-        existingUserServiceHelper.createUser(existingUserRequestBody);
+        existingStateUserService.createUser(existingUserRequestBody);
     }
 
     @After
-    public  void tearDown() {
-        updatedUserServiceHelper.deleteUser();
-        existingUserServiceHelper.deleteUser();
+    public void tearDown() {
+        updatedStateUserService.deleteUser();
+        existingStateUserService.deleteUser();
     }
 
     @Test
+    @DisplayName("Невозможность изменения почты пользователя на уже использываемую")
     public void changeEmailToExistingTest() {
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        UserRequestBody requestBody = new UserRequestBody(
                 existingUserRequestBody.email,
                 "wordpass",
                 "UserUser"
         );
-        Response response = updatedUserServiceHelper.updateUser(requestBody);
-        response.then().assertThat().body("success", equalTo(false))
+        Response response = updatedStateUserService.updateUser(requestBody);
+        response.then().assertThat().statusCode(403)
                 .and()
-                .body("message", equalTo("User with such email already exists"))
+                .body("success", equalTo(false))
                 .and()
-                .statusCode(403);
+                .body("message", equalTo("User with such email already exists"));
     }
 }

@@ -1,12 +1,15 @@
-package helpers;
+package api.order;
 
+import api.Constants;
+import api.user.UserService;
+import io.qameta.allure.Step;
 import io.restassured.response.Response;
 
 import static io.restassured.RestAssured.given;
 
 public class OrderService {
-
-    public static Response createOrder(CreateOrderRequestBody requestBody, String accessToken) {
+    @Step("Создание заказа")
+    public Response createOrder(CreateOrderRequestBody requestBody, String accessToken) {
         return given()
                 .auth()
                 .oauth2(UserService.getBearerToken(accessToken))
@@ -14,32 +17,35 @@ public class OrderService {
                 .and()
                 .body(requestBody)
                 .when()
-                .post("/api/orders");
+                .post(Constants.ORDERS_PATH);
     }
 
-    public static Response createOrderWithoutAuthorization(CreateOrderRequestBody requestBody) {
+    @Step("Создание заказа без авторизации")
+    public Response createOrderWithoutAuthorization(CreateOrderRequestBody requestBody) {
         return given()
                 .header("Content-type", "application/json")
                 .and()
                 .body(requestBody)
                 .when()
-                .post("/api/orders");
+                .post(Constants.ORDERS_PATH);
     }
 
-    public static Response getOrders(String accessToken) {
+    @Step("Получение заказа")
+    public Response getOrders(String accessToken) {
         return given()
                 .auth()
                 .oauth2(UserService.getBearerToken(accessToken))
                 .header("Content-type", "application/json")
                 .when()
-                .get("/api/orders");
+                .get(Constants.ORDERS_PATH);
     }
 
-    public static Response getOrdersWithoutAuthorization() {
+    @Step("Получение заказа без авторизации")
+    public Response getOrdersWithoutAuthorization() {
         return given()
                 .header("Content-type", "application/json")
                 .when()
-                .get("/api/orders");
+                .get(Constants.ORDERS_PATH);
     }
 
 }

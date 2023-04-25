@@ -1,7 +1,6 @@
-import helpers.CreateUserRequestBody;
-import helpers.LoginUserRequestBody;
-import helpers.UserService;
-import helpers.UserServiceHelper;
+import api.user.*;
+import api.Constants;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.After;
@@ -10,56 +9,58 @@ import org.junit.Test;
 import static org.hamcrest.Matchers.equalTo;
 
 public class ChangingUserDataTest {
-
-    private final UserServiceHelper userServiceHelper = new UserServiceHelper();
+    private final StateUserService stateUserService = new StateUserService();
+    private final UserService userService = new UserService();
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/";
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        RestAssured.baseURI = Constants.BASE_URI;
+        UserRequestBody requestBody = new UserRequestBody(
                 "chereder@yan.ru",
                 "password",
                 "User"
         );
-        Response response = userServiceHelper.createUser(requestBody);
+        stateUserService.createUser(requestBody);
     }
 
     @After
-    public  void tearDown() {
-        userServiceHelper.deleteUser();
+    public void tearDown() {
+        stateUserService.deleteUser();
     }
 
     @Test
+    @DisplayName("Изменение данных авторезированного пользователя")
     public void changingUserDataTest() {
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        UserRequestBody requestBody = new UserRequestBody(
                 "chereder@yandexx.ru",
                 "wordpass",
                 "UserUser"
         );
-        Response response = userServiceHelper.updateUser(requestBody);
-        response.then().assertThat().body("success", equalTo(true))
+        Response response = stateUserService.updateUser(requestBody);
+        response.then().assertThat().statusCode(200)
+                .and()
+                .body("success", equalTo(true))
                 .and()
                 .body("user.name", equalTo(requestBody.name))
                 .and()
-                .body("user.email", equalTo(requestBody.email))
-                .and()
-                .statusCode(200);
+                .body("user.email", equalTo(requestBody.email));
 
-        userServiceHelper.loginUser(new LoginUserRequestBody(requestBody.email, requestBody.password));
+        stateUserService.loginUser(new LoginUserRequestBody(requestBody.email, requestBody.password));
     }
 
     @Test
+    @DisplayName("Невозможность изменения данных не авторезированного пользователя")
     public void updateUserWithoutAuthorizationTest() {
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        UserRequestBody requestBody = new UserRequestBody(
                 "chereder@yandexx.ru",
                 "wordpass",
                 "UserUser"
         );
-        Response response = UserService.updateUserWithoutAuthorization(requestBody);
-        response.then().assertThat().body("success", equalTo(false))
+        Response response = userService.updateUserWithoutAuthorization(requestBody);
+        response.then().assertThat().statusCode(401)
                 .and()
-                .body("message", equalTo("You should be authorised"))
+                .body("success", equalTo(false))
                 .and()
-                .statusCode(401);
+                .body("message", equalTo("You should be authorised"));
     }
 }

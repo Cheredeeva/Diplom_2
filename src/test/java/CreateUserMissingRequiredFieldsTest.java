@@ -1,5 +1,7 @@
-import helpers.CreateUserRequestBody;
-import helpers.UserService;
+import api.Constants;
+import api.user.UserRequestBody;
+import api.user.UserService;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.Before;
@@ -14,6 +16,8 @@ public class CreateUserMissingRequiredFieldsTest {
     private final String email;
     private final String password;
     private final String name;
+
+    private final UserService userService = new UserService();
 
     public CreateUserMissingRequiredFieldsTest(String email, String password, String name) {
         this.email = email;
@@ -32,15 +36,16 @@ public class CreateUserMissingRequiredFieldsTest {
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/";
+        RestAssured.baseURI = Constants.BASE_URI;
     }
 
     @Test
+    @DisplayName("Невозможность регистрация с не заполненным полем ")
     public void createUserMissingRequiredFieldsTest() {
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(email, password, name);
-        Response response = UserService.createUser(requestBody);
-        response.then().assertThat().body("message", equalTo("Email, password and name are required fields"))
+        UserRequestBody requestBody = new UserRequestBody(email, password, name);
+        Response response = userService.createUser(requestBody);
+        response.then().assertThat().statusCode(403)
                 .and()
-                .statusCode(403);
+                .body("message", equalTo("Email, password and name are required fields"));
     }
 }

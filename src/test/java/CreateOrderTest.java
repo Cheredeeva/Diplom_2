@@ -1,4 +1,9 @@
-import helpers.*;
+import api.Constants;
+import api.order.CreateOrderRequestBody;
+import api.order.OrderService;
+import api.user.UserRequestBody;
+import api.user.StateUserService;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.After;
@@ -14,7 +19,8 @@ import static org.hamcrest.Matchers.*;
 @RunWith(Parameterized.class)
 public class CreateOrderTest {
     private final boolean isAuthorized;
-    private final UserServiceHelper userServiceHelper = new UserServiceHelper();
+    private final StateUserService stateUserService = new StateUserService();
+    private final OrderService orderService = new OrderService();
 
     public CreateOrderTest(boolean isAuthorized) {
         this.isAuthorized = isAuthorized;
@@ -30,35 +36,36 @@ public class CreateOrderTest {
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/";
+        RestAssured.baseURI = Constants.BASE_URI;
         if (isAuthorized) {
-            CreateUserRequestBody requestBody = new CreateUserRequestBody(
+            UserRequestBody requestBody = new UserRequestBody(
                     "chereder@yan.ru",
                     "password",
                     "User"
             );
-            userServiceHelper.createUser(requestBody);
+            stateUserService.createUser(requestBody);
         }
     }
 
     @After
     public  void tearDown() {
         if (isAuthorized) {
-            userServiceHelper.deleteUser();
+            stateUserService.deleteUser();
         }
     }
 
     @Test
+    @DisplayName("Создание закза без авторизации")
     public void createOrderWithAuthorizationTest() {
         CreateOrderRequestBody requestBody = new CreateOrderRequestBody(
                 List.of("61c0c5a71d1f82001bdaaa72", "61c0c5a71d1f82001bdaaa6f", "61c0c5a71d1f82001bdaaa6c")
         );
         Response response = isAuthorized
-                ? OrderService.createOrder(requestBody, userServiceHelper.accessToken)
-                : OrderService.createOrderWithoutAuthorization(requestBody);
-        response.then().assertThat().body("success", equalTo(true))
+                ? orderService.createOrder(requestBody, stateUserService.accessToken)
+                : orderService.createOrderWithoutAuthorization(requestBody);
+        response.then().assertThat().statusCode(200)
                 .and()
-                .statusCode(200);
+                .body("success", equalTo(true));
     }
 
 }

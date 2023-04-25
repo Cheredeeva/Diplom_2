@@ -1,55 +1,60 @@
-import helpers.CreateUserRequestBody;
-import helpers.UserService;
-import helpers.UserServiceHelper;
+import api.Constants;
+import api.user.UserRequestBody;
+import api.user.UserService;
+import api.user.StateUserService;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import static org.hamcrest.Matchers.equalTo;
 
 public class CreateUserTest {
-
-    private final UserServiceHelper userServiceHelper = new UserServiceHelper();
+    private final StateUserService stateUserService = new StateUserService();
+    private final UserService userService = new UserService();
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/";
+        RestAssured.baseURI = Constants.BASE_URI;
     }
 
     @After
-    public  void tearDown() {
-        userServiceHelper.deleteUser();
+    public void tearDown() {
+        stateUserService.deleteUser();
     }
 
     @Test
+    @DisplayName("Регистрация нового пользователя")
     public void createNewUserTest() {
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        UserRequestBody requestBody = new UserRequestBody(
                 "chereder@yan.ru",
                 "password",
                 "Username"
         );
-        Response response = userServiceHelper.createUser(requestBody);
-        response.then().assertThat().body("success", equalTo(true))
+        Response response = stateUserService.createUser(requestBody);
+        response.then().assertThat().statusCode(200)
                 .and()
-                .statusCode(200);
+                .body("success", equalTo(true));
     }
 
     @Test
+    @DisplayName("Невозможность регистрации зарегистрированного пользователя")
     public void createTwoSameUserTest() {
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        UserRequestBody requestBody = new UserRequestBody(
                 "chereder@yan.ru",
                 "password",
                 "Username"
         );
-        Response response = userServiceHelper.createUser(requestBody);
-        response.then().assertThat().body("success", equalTo(true))
+        Response response = stateUserService.createUser(requestBody);
+        response.then().assertThat().statusCode(200)
                 .and()
-                .statusCode(200);
+                .body("success", equalTo(true));
 
-        response = UserService.createUser(requestBody);
-        response.then().assertThat().body("message", equalTo("User already exists"))
+        response = userService.createUser(requestBody);
+        response.then().assertThat().statusCode(403)
                 .and()
-                .statusCode(403);
+                .body("message", equalTo("User already exists"));
     }
 }

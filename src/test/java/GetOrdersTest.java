@@ -1,4 +1,9 @@
-import helpers.*;
+import api.Constants;
+import api.order.CreateOrderRequestBody;
+import api.order.OrderService;
+import api.user.UserRequestBody;
+import api.user.StateUserService;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.After;
@@ -10,45 +15,47 @@ import java.util.List;
 import static org.hamcrest.Matchers.equalTo;
 
 public class GetOrdersTest {
-
-    private final UserServiceHelper userServiceHelper = new UserServiceHelper();
+    private final StateUserService stateUserService = new StateUserService();
+    private final OrderService orderService = new OrderService();
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/";
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        RestAssured.baseURI = Constants.BASE_URI;
+        UserRequestBody requestBody = new UserRequestBody(
                 "chereder@yan.ru",
                 "password",
                 "User"
         );
-        userServiceHelper.createUser(requestBody);
+        stateUserService.createUser(requestBody);
 
         CreateOrderRequestBody orderRequestBody = new CreateOrderRequestBody(
                 List.of("61c0c5a71d1f82001bdaaa72", "61c0c5a71d1f82001bdaaa6f", "61c0c5a71d1f82001bdaaa6c")
         );
-        OrderService.createOrder(orderRequestBody, userServiceHelper.accessToken);
+        orderService.createOrder(orderRequestBody, stateUserService.accessToken);
     }
 
     @After
-    public  void tearDown() {
-        userServiceHelper.deleteUser();
+    public void tearDown() {
+        stateUserService.deleteUser();
     }
 
     @Test
+    @DisplayName("Получение заказов авторизованного пользователя")
     public void getOrdersTest() {
-        Response response = OrderService.getOrders(userServiceHelper.accessToken);
-        response.then().assertThat().body("success", equalTo(true))
+        Response response = orderService.getOrders(stateUserService.accessToken);
+        response.then().assertThat().statusCode(200)
                 .and()
-                .statusCode(200);
+                .body("success", equalTo(true));
     }
 
     @Test
+    @DisplayName("Невозможность получения заказов не авторизованного пользователя")
     public void getOrdersWithoutAuthorizationTest() {
-        Response response = OrderService.getOrdersWithoutAuthorization();
-        response.then().assertThat().body("success", equalTo(false))
+        Response response = orderService.getOrdersWithoutAuthorization();
+        response.then().assertThat().statusCode(401)
                 .and()
-                .body("message", equalTo("You should be authorised"))
+                .body("success", equalTo(false))
                 .and()
-                .statusCode(401);
+                .body("message", equalTo("You should be authorised"));
     }
 }

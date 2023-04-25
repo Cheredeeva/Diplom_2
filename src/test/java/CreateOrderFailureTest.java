@@ -1,4 +1,7 @@
-import helpers.*;
+import api.Constants;
+import api.order.CreateOrderRequestBody;
+import api.order.OrderService;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.Before;
@@ -9,31 +12,34 @@ import java.util.List;
 import static org.hamcrest.Matchers.equalTo;
 
 public class CreateOrderFailureTest {
+    private final OrderService orderService = new OrderService();
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/";
+        RestAssured.baseURI = Constants.BASE_URI;
     }
 
     @Test
+    @DisplayName("Невозможность создания заказа без ингридиентов")
     public void createOrderWithoutIngredientsTest() {
         CreateOrderRequestBody requestBody = new CreateOrderRequestBody(
                 List.of()
         );
-        Response response = OrderService.createOrderWithoutAuthorization(requestBody);
-        response.then().assertThat().body("success", equalTo(false))
+        Response response = orderService.createOrderWithoutAuthorization(requestBody);
+        response.then().assertThat().statusCode(400)
                 .and()
-                .body("message", equalTo("Ingredient ids must be provided"))
+                .body("success", equalTo(false))
                 .and()
-                .statusCode(400);
+                .body("message", equalTo("Ingredient ids must be provided"));
     }
 
     @Test
+    @DisplayName("Невозможность создания заказа с невалидныим хешом ингредиента")
     public void createOrderWithInvalidIngredientsTest() {
         CreateOrderRequestBody requestBody = new CreateOrderRequestBody(
                 List.of("invalidhash", "61c0c5a71d1f82001bdaaa6f")
         );
-        Response response = OrderService.createOrderWithoutAuthorization(requestBody);
+        Response response = orderService.createOrderWithoutAuthorization(requestBody);
         response.then().assertThat()
                 .statusCode(500);
     }

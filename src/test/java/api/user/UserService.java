@@ -1,29 +1,34 @@
-package helpers;
+package api.user;
 
+import api.Constants;
+import io.qameta.allure.Step;
 import io.restassured.response.Response;
 
 import static io.restassured.RestAssured.given;
 
 public class UserService {
-    public static Response createUser(CreateUserRequestBody requestBody) {
+    @Step("Создание пользователя")
+    public Response createUser(UserRequestBody requestBody) {
         return given()
                 .header("Content-type", "application/json")
                 .and()
                 .body(requestBody)
                 .when()
-                .post("/api/auth/register");
+                .post(Constants.REGISTER_PATH);
     }
 
-    public static Response loginUser(LoginUserRequestBody requestBody) {
+    @Step("Аутентификация пользователя")
+    public Response loginUser(LoginUserRequestBody requestBody) {
         return given()
                 .header("Content-type", "application/json")
                 .and()
                 .body(requestBody)
                 .when()
-                .post("/api/auth/login");
+                .post(Constants.LOGIN_PATH);
     }
 
-    public static Response updateUser(CreateUserRequestBody requestBody, String accessToken) {
+    @Step("Обновление данных пользователя")
+    public Response updateUser(UserRequestBody requestBody, String accessToken) {
         return given()
                 .auth()
                 .oauth2(getBearerToken(accessToken))
@@ -31,25 +36,27 @@ public class UserService {
                 .and()
                 .body(requestBody)
                 .when()
-                .patch("/api/auth/user");
+                .patch(Constants.USER_PATH);
     }
 
-    public static Response updateUserWithoutAuthorization(CreateUserRequestBody requestBody) {
+    @Step("Обновление данных пользователя без авторизации")
+    public Response updateUserWithoutAuthorization(UserRequestBody requestBody) {
         return given()
                 .header("Content-type", "application/json")
                 .and()
                 .body(requestBody)
                 .when()
-                .patch("/api/auth/user");
+                .patch(Constants.USER_PATH);
     }
 
-    public static Response deleteUser(String accessToken) {
+    @Step("Удаление пользователя")
+    public Response deleteUser(String accessToken) {
         return given()
                 .auth()
                 .oauth2(getBearerToken(accessToken))
                 .header("Content-type", "application/json")
                 .when()
-                .delete("/api/auth/user");
+                .delete(Constants.USER_PATH);
     }
 
     public static String getBearerToken(String accessToken) {

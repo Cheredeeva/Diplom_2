@@ -1,6 +1,6 @@
-package helpers;
+package api.user;
 
-public class CreateUserResponseBody {
+public class UserResponseBody {
     public boolean success;
     public String accessToken;
     public String refreshToken;

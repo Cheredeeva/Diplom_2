@@ -1,4 +1,6 @@
-import helpers.*;
+import api.user.*;
+import api.Constants;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.After;
@@ -11,10 +13,11 @@ import static org.hamcrest.Matchers.*;
 
 @RunWith(Parameterized.class)
 public class LoginUserFailureTest {
-
-    private final UserServiceHelper userServiceHelper = new UserServiceHelper();
     private final String email;
     private final String password;
+
+    private final StateUserService stateUserService = new StateUserService();
+    private final UserService userService = new UserService();
 
     public LoginUserFailureTest(String email, String password) {
         this.email = email;
@@ -31,26 +34,27 @@ public class LoginUserFailureTest {
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/";
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        RestAssured.baseURI = Constants.BASE_URI;
+        UserRequestBody requestBody = new UserRequestBody(
                 "chereder@yan.ru",
                 "password",
                 "User"
         );
-        Response response = userServiceHelper.createUser(requestBody);
+        stateUserService.createUser(requestBody);
     }
 
     @After
-    public  void tearDown() {
-        userServiceHelper.deleteUser();
+    public void tearDown() {
+        stateUserService.deleteUser();
     }
 
     @Test
+    @DisplayName("Невозможность авторизации с неверной почтой или паролем")
     public void loginUserFailureTest() {
         LoginUserRequestBody requestBody = new LoginUserRequestBody(email, password);
-        Response response = UserService.loginUser(requestBody);
-        response.then().assertThat().body("message", equalTo("email or password are incorrect"))
+        Response response = userService.loginUser(requestBody);
+        response.then().assertThat().statusCode(401)
                 .and()
-                .statusCode(401);
+                .body("message", equalTo("email or password are incorrect"));
     }
 }

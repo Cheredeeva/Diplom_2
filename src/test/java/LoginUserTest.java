@@ -1,4 +1,6 @@
-import helpers.*;
+import api.user.*;
+import api.Constants;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.junit.*;
@@ -6,34 +8,35 @@ import org.junit.*;
 import static org.hamcrest.Matchers.*;
 
 public class LoginUserTest {
-
-    private final UserServiceHelper userServiceHelper = new UserServiceHelper();
+    private final StateUserService stateUserService = new StateUserService();
+    private final UserService userService = new UserService();
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://stellarburgers.nomoreparties.site/";
-        CreateUserRequestBody requestBody = new CreateUserRequestBody(
+        RestAssured.baseURI = Constants.BASE_URI;
+        UserRequestBody requestBody = new UserRequestBody(
                 "chereder@yan.ru",
                 "password",
                 "User"
         );
-        Response response = userServiceHelper.createUser(requestBody);
+        stateUserService.createUser(requestBody);
     }
 
     @After
-    public  void tearDown() {
-        userServiceHelper.deleteUser();
+    public void tearDown() {
+        stateUserService.deleteUser();
     }
 
     @Test
-    public void createNewUserTest() {
+    @DisplayName("Авторизация существующего пользователя")
+    public void loginUserTest() {
         LoginUserRequestBody requestBody = new LoginUserRequestBody(
                 "chereder@yan.ru",
                 "password"
         );
-        Response response = UserService.loginUser(requestBody);
-        response.then().assertThat().body("success", equalTo(true))
+        Response response = userService.loginUser(requestBody);
+        response.then().assertThat().statusCode(200)
                 .and()
-                .statusCode(200);
+                .body("success", equalTo(true));
     }
 }

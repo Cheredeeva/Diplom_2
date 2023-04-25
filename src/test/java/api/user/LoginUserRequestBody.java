@@ -1,9 +1,8 @@
-package helpers;
+package api.user;
 
 public class LoginUserRequestBody {
-
-    private final String email;
-    private final String password;
+    public final String email;
+    public final String password;
 
     public LoginUserRequestBody(String email, String password) {
         this.email = email;
